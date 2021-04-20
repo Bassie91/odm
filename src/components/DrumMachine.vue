@@ -1,9 +1,25 @@
 <template>
   <div>
+    <audio id="beep" preload="auto">
+      <source src="../assets/sounds/beep.ogg" type="audio/ogg">
+    </audio>
+    <audio id="accent" preload="auto">
+      <source src="../assets/sounds/accent.ogg" type="audio/ogg">
+    </audio>
       <b-card-body>
-        <b-card-title>Simple methronome</b-card-title>
-        <b-card-sub-title class="mb-2">demo</b-card-sub-title>
+        <b-card-title>Methronome</b-card-title>
+        <b-card-sub-title class="mb-2">Set number of notes, accents and tempo...</b-card-sub-title>
         <b-card-text>
+          <div class="slidecontainer">
+            <input v-model=notes type="range" min="1" max="16" class="slider" @change="setButtons(beepSound)">
+            <p>Notes: {{notes}}</p>
+          </div>
+
+          <div class="slidecontainer">
+            <input v-model=tempo type="range" min="60" max="270" class="slider">
+            <p>Tempo: {{tempo}} bpm</p>
+          </div>
+
           <b-card-text>
           <b-button-group block class="">
             <b-button
@@ -15,28 +31,18 @@
           </b-button></b-button-group>
         </b-card-text>
 
-        <div class="slidecontainer">
-          <input v-model=tempo type="range" min="60" max="210" class="slider">
-          <p>{{tempo}}</p>
-        </div>
-        <!-- <input v-model=tempo placeholder=tempo> -->
+
 
         <b-button-group>
-          <b-button pill :pressed.sync="togglePlay" variant="dark" @click="handleClick(togglePlay)"><div v-if="togglePlay == true">
-          <svg class="bi bi-pause-fill" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-          <path d="M5.5 3.5A1.5 1.5 0 017 5v6a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5zm5 0A1.5 1.5 0 0112 5v6a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5z"/>
-          </svg>
+          <b-button pill :pressed.sync="togglePlay" variant="dark" class="p-3" @click="handleClick(togglePlay)"><div v-if="togglePlay == true">
+          <span class="mdi mdi-pause"></span> Pause
           </div>
           <div v-else>
-          <svg class="bi bi-play-fill" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-          <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 010 1.393z"/>
-          </svg>
+          <span class="mdi mdi-play"></span>Play
         </div></b-button></b-button-group>
       </b-card-text>
     </b-card-body>
-    <audio id="beep">
-      <source src="../../public/sounds/beep.ogg" type="audio/ogg">
-    </audio>
+    
   </div>
 </template>
 <script>
@@ -45,19 +51,18 @@ export default {
   name: 'DrumMachine',
   data () {
     return {
-      min: 60,
-      max: 240,
+      notes: 4,
       tempo: 90,
       togglePlay: false,
       play: false,
       buttonNumber: 0,
-      buttons: [
-        { caption: '1', state: true },
-        { caption: '2', state: false },
-        { caption: '3', state: true },
-        { caption: '4', state: false }
-      ]
+      buttons: []
     }
+  },
+  mounted() {
+    const accent = document.getElementById("accent")
+    // const beep = document.getElementById("beep")
+    this.setButtons(accent)
   },
   computed: {
     beepSound() {
@@ -65,17 +70,31 @@ export default {
     },
     getTempo() {
       return (60/this.tempo)*1000
-    }
+    },
   },
   methods: {
+    setButtons(sound) {
+      let buttons = []
+      let i
+      let button = Object
+      
+      for(i=1;i<=this.notes;i++){
+        button = { caption: i, state: false, sound: sound}
+        buttons.push(button)
+        // console.log(button)
+      }
+
+      this.buttons = buttons
+    },
     handleClick: function(togglePlay) {
       if(togglePlay===false){
+        this.buttonNumber = 0
         clearInterval(this.play)
       } else {
-        this.play = setInterval(this.oneSecondFunction,this.getTempo)
+        this.play = setInterval(this.playNotes,this.getTempo)
       }
     }, 
-    oneSecondFunction: function() {
+    playNotes() {
       let buttonNumber = this.buttonNumber
       let button = this.buttons[buttonNumber]
       let beatLength = this.buttons.length - 1
@@ -87,14 +106,10 @@ export default {
       }
       
       if(button.state){
-        this.playSound()
-        console.log("this is button "+ buttonNumber)
-      }
+        button.sound.play()
+        // console.log("this is button "+ buttonNumber)
+      } else document.getElementById("beep").play()
     },
-    playSound: function(){
-      // let audio = new Audio('/public/sounds/beep.ogg')
-      this.beepSound.play()
-    }
   }  
 }
 </script>
@@ -109,7 +124,7 @@ export default {
   -webkit-appearance: none;  /* Override default CSS styles */
   appearance: none;
   width: 100%; /* Full-width */
-  height: 25px; /* Specified height */
+  height: 10px; /* Specified height */
   background: #d3d3d3; /* Grey background */
   outline: none; /* Remove outline */
   opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
@@ -126,15 +141,15 @@ export default {
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none; /* Override default look */
   appearance: none;
-  width: 25px; /* Set a specific slider handle width */
-  height: 25px; /* Slider handle height */
+  width: 15px; /* Set a specific slider handle width */
+  height: 15px; /* Slider handle height */
   background: #4c74af; /* Green background */
   cursor: pointer; /* Cursor on hover */
 }
 
 .slider::-moz-range-thumb {
-  width: 25px; /* Set a specific slider handle width */
-  height: 25px; /* Slider handle height */
+  width: 15px; /* Set a specific slider handle width */
+  height: 15px; /* Slider handle height */
   background: #4c74af; /* Green background */
   cursor: pointer; /* Cursor on hover */
 }
